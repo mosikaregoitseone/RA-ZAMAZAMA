@@ -1,0 +1,277 @@
+/* src/app/globals.css */
+/* Enhanced global styles with Tailwind component classes */
+
+@import "tailwindcss";
+
+/* Custom component classes */
+@layer components {
+  /* Page Headings */
+  .page-heading {
+    @apply text-3xl font-bold text-gray-900 mb-2;
+  }
+
+  .page-subheading {
+    @apply text-gray-600 text-sm mb-4;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-sm;
+  }
+
+  .card-lg {
+    @apply bg-white border border-gray-200 rounded-lg shadow-md;
+  }
+
+  .card-hover {
+    @apply bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-shadow;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-block px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-blue {
+    @apply inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800;
+  }
+
+  .badge-green {
+    @apply inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800;
+  }
+
+  .badge-red {
+    @apply inline-block px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800;
+  }
+
+  .badge-yellow {
+    @apply inline-block px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800;
+  }
+
+  .badge-gray {
+    @apply inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800;
+  }
+
+  /* Form Inputs */
+  .input-base {
+    @apply w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition;
+  }
+
+  .input-error {
+    @apply w-full border border-red-500 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition;
+  }
+
+  .input-sm {
+    @apply w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition;
+  }
+
+  .input-lg {
+    @apply w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition;
+  }
+
+  /* Form Labels */
+  .label-base {
+    @apply block text-sm font-medium text-gray-900 mb-2;
+  }
+
+  .label-required {
+    @apply block text-sm font-medium text-gray-900 mb-2;
+  }
+
+  .label-required::after {
+    content: "*";
+    @apply text-red-500 ml-1;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 text-white;
+  }
+
+  .btn-success {
+    @apply font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-green-600 hover:bg-green-700 text-white;
+  }
+
+  .btn-danger {
+    @apply font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 hover:bg-red-700 text-white;
+  }
+
+  .btn-secondary {
+    @apply font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 hover:bg-gray-300 text-gray-900;
+  }
+
+  .btn-outline {
+    @apply font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-2 border-gray-300 hover:bg-gray-50 text-gray-900;
+  }
+
+  .btn-sm {
+    @apply font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1 text-sm;
+  }
+
+  .btn-md {
+    @apply font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 text-base;
+  }
+
+  .btn-lg {
+    @apply font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 text-lg;
+  }
+
+  .btn-block {
+    @apply font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full;
+  }
+
+  /* Button Groups */
+  .btn-group {
+    @apply flex gap-3;
+  }
+
+  .btn-group-vertical {
+    @apply flex flex-col gap-3;
+  }
+
+  /* Grids */
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+
+  .grid-2 {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+  }
+
+  .grid-3 {
+    @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+  }
+
+  /* Alerts */
+  .alert {
+    @apply border rounded-lg p-4;
+  }
+
+  .alert-error {
+    @apply border rounded-lg p-4 bg-red-50 border-red-200 text-red-800;
+  }
+
+  .alert-success {
+    @apply border rounded-lg p-4 bg-green-50 border-green-200 text-green-800;
+  }
+
+  .alert-warning {
+    @apply border rounded-lg p-4 bg-yellow-50 border-yellow-200 text-yellow-800;
+  }
+
+  .alert-info {
+    @apply border rounded-lg p-4 bg-blue-50 border-blue-200 text-blue-800;
+  }
+
+  /* Loading Skeleton */
+  .skeleton {
+    @apply bg-gray-200 rounded animate-pulse;
+  }
+
+  .skeleton-text {
+    @apply bg-gray-200 rounded animate-pulse h-4 w-3/4;
+  }
+
+  .skeleton-image {
+    @apply bg-gray-200 rounded animate-pulse aspect-square;
+  }
+
+  /* Divider */
+  .divider {
+    @apply border-t border-gray-200;
+  }
+
+  .divider-lg {
+    @apply border-t-2 border-gray-300;
+  }
+
+  /* Text Truncation */
+  .truncate-line {
+    @apply truncate;
+  }
+
+  .truncate-2 {
+    @apply line-clamp-2;
+  }
+
+  .truncate-3 {
+    @apply line-clamp-3;
+  }
+}
+
+/* Global Styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gray-50;
+}
+
+a {
+  @apply transition-colors;
+}
+
+/* Custom animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  .animate-fade-out {
+    animation: fade-out 0.3s ease-out;
+  }
+}
+
+/* Scrollbar Styling (optional) */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded hover:bg-gray-500;
+}
+
+/* Focus Visible for Accessibility */
+*:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    @apply !animate-none !transition-none;
+  }
+}
