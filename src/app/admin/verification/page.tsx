@@ -1,5 +1,8 @@
 "use client";
 
+export const dynamic = 'force-dynamic'; 
+export const revalidate = 0;
+
 /**
  * Admin Verification Page
  * Displays users for manual verification (approve/reject individual users)
