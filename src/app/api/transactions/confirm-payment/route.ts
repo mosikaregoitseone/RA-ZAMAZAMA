@@ -1,191 +1,77 @@
-// File: src/app/api/transactions/confirm-payment/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+// Force dynamic (no prerendering for API routes with server-side code)
+export const dynamic = "force-dynamic";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Create Supabase client inside the handler (not at module level)
+function createSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL is not configured. Check Vercel environment variables."
+    );
+  }
+  if (!supabaseAnonKey) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY is not configured. Check Vercel environment variables."
+    );
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey);
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { transactionId, userId } = await request.json();
+    const body = await request.json();
+    const { transactionId, paymentProof } = body;
 
-    if (!transactionId || !userId) {
+    // Validate input
+    if (!transactionId || !paymentProof) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Missing required fields',
-        },
+        { error: "Missing transactionId or paymentProof" },
         { status: 400 }
       );
     }
 
-    // ============================================
-    // GET TRANSACTION
-    // ============================================
-    const { data: transaction, error: transactionError } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('id', transactionId)
-      .single();
+    // Create Supabase client here (at request time, not build time)
+    const supabase = createSupabaseClient();
 
-    if (transactionError || !transaction) {
-      console.error('Transaction fetch error:', transactionError);
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Transaction not found',
-        },
-        { status: 404 }
-      );
-    }
-
-    // ============================================
-    // VERIFY SELLER
-    // ============================================
-    if (transaction.seller_id !== userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'You are not the seller of this transaction',
-        },
-        { status: 403 }
-      );
-    }
-
-    // ============================================
-    // VERIFY PAYMENT STATUS
-    // ============================================
-    if (transaction.payment_status !== 'proof_uploaded') {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `Cannot confirm payment. Current status: ${transaction.payment_status}`,
-        },
-        { status: 400 }
-      );
-    }
-
-    // ============================================
-    // UPDATE TRANSACTION
-    // ============================================
-    const { error: updateError } = await supabase
-      .from('transactions')
+    // Update transaction with payment proof
+    const { error } = await supabase
+      .from("transactions")
       .update({
-        payment_status: 'confirmed',
-        seller_payment_confirmed: true,
-        completed_at: new Date().toISOString(),
-        status: 'completed',
+        payment_proof_url: paymentProof,
+        status: "payment_submitted",
+        updated_at: new Date().toISOString(),
       })
-      .eq('id', transactionId);
+      .eq("id", transactionId);
 
-    if (updateError) {
-      console.error('Transaction update error:', updateError);
-
+    if (error) {
+      console.error("Supabase error:", error);
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Failed to update transaction',
-        },
+        { error: "Failed to update transaction" },
         { status: 500 }
       );
     }
 
-    // ============================================
-    // UPDATE SELLER TRUST SCORE
-    // ============================================
-    try {
-      await supabase.rpc('increment_trust_score', {
-        user_id: transaction.seller_id,
-        points: 5,
-      });
-
-      await supabase.rpc('increment_transaction_count', {
-        user_id: transaction.seller_id,
-      });
-    } catch (error) {
-      console.error('Seller trust score update failed:', error);
-    }
-
-    // ============================================
-    // UPDATE BUYER TRUST SCORE
-    // ============================================
-    try {
-      await supabase.rpc('increment_trust_score', {
-        user_id: transaction.buyer_id,
-        points: 5,
-      });
-
-      await supabase.rpc('increment_transaction_count', {
-        user_id: transaction.buyer_id,
-      });
-    } catch (error) {
-      console.error('Buyer trust score update failed:', error);
-    }
-
-    // ============================================
-    // GET CLIENT IP
-    // ============================================
-    const forwardedFor = request.headers.get('x-forwarded-for');
-    const realIp = request.headers.get('x-real-ip');
-
-    const clientIp =
-      forwardedFor?.split(',')[0]?.trim() ||
-      realIp ||
-      '0.0.0.0';
-
-    // ============================================
-    // AUDIT LOG
-    // ============================================
-    const { error: auditError } = await supabase
-      .from('admin_audit_log')
-      .insert({
-        action: 'payment_confirmed',
-        admin_id: userId,
-        resource_type: 'transaction',
-        resource_id: transactionId,
-        details: {
-          transaction_id: transactionId,
-          seller_id: transaction.seller_id,
-          buyer_id: transaction.buyer_id,
-          amount: transaction.listing_price,
-          currency: transaction.listing_currency,
-        },
-        ip_address: clientIp,
-        user_agent: request.headers.get('user-agent') || '',
-      });
-
-    if (auditError) {
-      console.error('Audit log error:', auditError);
-    }
-
-    // ============================================
-    // SUCCESS RESPONSE
-    // ============================================
-    return NextResponse.json({
-      success: true,
-      message: 'Payment confirmed successfully! Transaction completed.',
-      data: {
-        transactionId,
-        status: 'completed',
-      },
-    });
+    return NextResponse.json(
+      { success: true, message: "Payment confirmed" },
+      { status: 200 }
+    );
   } catch (error) {
-    console.error('Payment confirmation error:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    console.error("API error:", errorMessage);
 
     return NextResponse.json(
       {
-        success: false,
-        message:
-          'Server error: ' +
-          (error instanceof Error ? error.message : 'Unknown error'),
+        error: errorMessage,
+        hint: "Check Vercel environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
