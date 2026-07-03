@@ -3,15 +3,13 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
-
 import { multipleAccounts } from '../../../lib/multipleAccounts';
 import { initializeTrustScore } from '../../../lib/trustScoreUtils';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +18,6 @@ export default function AuthCallbackPage() {
       try {
         // Supabase automatically handles the OAuth callback
         // The session is set when the page loads
-    
         const {
           data: { session },
           error: sessionError,
