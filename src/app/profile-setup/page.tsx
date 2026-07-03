@@ -108,16 +108,16 @@ export default function ProfileSetupPage() {
       });
       if (error) throw error;
 
-      const { error: verifyError } = await supabase.from("user_verifications").upsert({
-        user_id: user.id,
-        email_verified: emailVerified,
-        documents_verified: false,
-        identity_verified: false,
-        verification_status: "unverified",
-        verification_reminder_dismissed: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+     const { error: verifyError } = await supabase.from("user_verifications").upsert({
+  user_id: user.id,
+  email_verified: emailVerified,
+  documents_verified: false,
+  identity_verified: false,
+  verification_status: "pending",  // VALID - matches VerificationStatus.Pending
+  verification_reminder_dismissed: false,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+});
       if (verifyError) throw verifyError;
 
       setSaved(true);
