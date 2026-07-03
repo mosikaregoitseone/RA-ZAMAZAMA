@@ -1,8 +1,7 @@
 // src/app/edit-listing/[id]/EditListingForm.tsx
 "use client";
 
-export const dynamic = 'force-dynamic'; 
-export const revalidate = 0;
+
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";

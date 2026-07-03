@@ -1,6 +1,5 @@
 "use client";
-export const dynamic = 'force-dynamic'; 
-export const revalidate = 0;
+
 
 /** Super-admin-only page — lists every admin account. */
 import { useEffect, useState } from "react";
