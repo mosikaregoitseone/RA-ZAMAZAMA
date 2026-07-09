@@ -28,6 +28,18 @@ export async function createTransaction(request: TransactionCreateRequest): Prom
   message: string;
 }> {
   try {
+    // CRITICAL FIX: Validate listing_price
+    // The database constraint requires: listing_price > 0
+    const price = Number(request.listingPrice);
+    
+    // Check if price is a valid number and greater than 0
+    if (isNaN(price) || price <= 0) {
+      return {
+        success: false,
+        message: `Invalid listing price: ${request.listingPrice}. Price must be a number greater than 0.`,
+      };
+    }
+
     const qrCode = 'QR_' + Math.random().toString(36).substring(2, 11) + Date.now();
 
     const { data, error } = await supabase
@@ -37,7 +49,7 @@ export async function createTransaction(request: TransactionCreateRequest): Prom
           buyer_id: request.buyerId,
           seller_id: request.sellerId,
           listing_id: request.listingId,
-          listing_price: request.listingPrice,
+          listing_price: price, // Use validated price
           listing_currency: 'ZAR',
           qr_code: qrCode,
           status: 'qr_generated',
@@ -51,6 +63,7 @@ export async function createTransaction(request: TransactionCreateRequest): Prom
       .single();
 
     if (error) {
+      console.error('Transaction creation error:', error);
       return { success: false, message: 'Failed to create transaction: ' + error.message };
     }
 
@@ -61,6 +74,7 @@ export async function createTransaction(request: TransactionCreateRequest): Prom
       message: 'Transaction created. Please scan the QR code at meetup.',
     };
   } catch (err) {
+    console.error('createTransaction error:', err);
     return {
       success: false,
       message: 'An error occurred: ' + (err instanceof Error ? err.message : 'Unknown error'),

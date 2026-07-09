@@ -59,6 +59,10 @@ export function MeetupLocationForm({
   const [success, setSuccess] = useState('');
   const [step, setStep] = useState<'input' | 'review' | 'success'>('input');
 
+  // CRITICAL FIX: Validate price before allowing transaction
+  const validatedPrice = Number(listingPrice);
+  const isPriceValid = !isNaN(validatedPrice) && validatedPrice > 0;
+
   // Validation
   const buyerLocationMatch = buyerLocation.toLowerCase().trim() === sellerLocation.toLowerCase().trim();
   const buyerTimeMatch = buyerTime === sellerTime || (!buyerTime && !sellerTime);
@@ -70,6 +74,12 @@ export function MeetupLocationForm({
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // CRITICAL FIX: Check price validity FIRST
+    if (!isPriceValid) {
+      setError(`❌ Invalid listing price: ${listingPrice}. Price must be greater than 0.`);
+      return;
+    }
 
     // Validate buyer location
     if (!buyerLocation.trim()) {
@@ -111,11 +121,18 @@ export function MeetupLocationForm({
     setError('');
 
     try {
+      // CRITICAL FIX: Final price validation before API call
+      if (!isPriceValid) {
+        setError(`Invalid listing price. Must be greater than 0.`);
+        setLoading(false);
+        return;
+      }
+
       const result = await createTransaction({
         buyerId,
         sellerId,
         listingId,
-        listingPrice,
+        listingPrice: validatedPrice,
         meetupLocation: buyerLocation.trim(),
         meetupDate: buyerDate || undefined,
         meetupTime: buyerTime || undefined,
@@ -155,7 +172,10 @@ export function MeetupLocationForm({
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h3 className="font-semibold text-blue-900 mb-2">📋 Listing Details</h3>
           <p className="text-sm text-blue-800"><strong>Item:</strong> {listingTitle}</p>
-          <p className="text-sm text-blue-800"><strong>Price:</strong> {listingPrice} ZAR</p>
+          <p className="text-sm text-blue-800">
+            <strong>Price:</strong> {validatedPrice} ZAR
+            {!isPriceValid && <span className="text-red-600 ml-2">❌ Invalid</span>}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -330,6 +350,9 @@ export function MeetupLocationForm({
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
             <h4 className="font-semibold mb-3 text-gray-800">✓ Validation Status</h4>
             <div className="space-y-2 text-sm">
+              <p className={isPriceValid ? 'text-green-700 font-semibold' : 'text-red-700'}>
+                {isPriceValid ? '✅' : '❌'} Price valid ({validatedPrice} ZAR)
+              </p>
               <p className={buyerLocationMatch ? 'text-green-700 font-semibold' : 'text-red-700'}>
                 {buyerLocationMatch ? '✅' : '❌'} Locations match
               </p>
@@ -357,14 +380,14 @@ export function MeetupLocationForm({
             </button>
             <button
               type="submit"
-              disabled={!allLocationsMatch}
+              disabled={!allLocationsMatch || !isPriceValid}
               className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ${
-                allLocationsMatch
+                allLocationsMatch && isPriceValid
                   ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              {allLocationsMatch ? '✓ Proceed to Confirm' : '⚠️ Locations Must Match'}
+              {allLocationsMatch && isPriceValid ? '✓ Proceed to Confirm' : '⚠️ Locations & Price Must Be Valid'}
             </button>
           </div>
         </form>
@@ -383,7 +406,7 @@ export function MeetupLocationForm({
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <h3 className="font-semibold text-blue-900 mb-2">📦 Item</h3>
             <p className="text-blue-800">{listingTitle}</p>
-            <p className="text-blue-800 font-bold">{listingPrice} ZAR</p>
+            <p className="text-blue-800 font-bold">{validatedPrice} ZAR</p>
           </div>
 
           {/* Location */}
