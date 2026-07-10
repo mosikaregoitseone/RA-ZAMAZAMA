@@ -145,7 +145,41 @@ export function VerificationStatus({ userId, compact = false }: VerificationStat
     return Math.round((completed / total) * 100);
   };
 
+  // ✅ FIXED: Get overall documents status based on individual document statuses
+  const getDocumentsOverallStatus = () => {
+    // All three must be approved for documents to be verified
+    const statuses = [data.student_card_status, data.registration_proof_status, data.fee_statement_status];
+    
+    // If all are approved
+    if (statuses.every(s => s === 'approved')) {
+      return 'approved';
+    }
+    
+    // If any are rejected
+    if (statuses.some(s => s === 'rejected')) {
+      return 'rejected';
+    }
+    
+    // If any are pending or not started
+    if (statuses.some(s => s === 'pending' || s === 'not_started')) {
+      return 'pending';
+    }
+    
+    return 'pending';
+  };
+
+  // ✅ FIXED: Count how many documents have been submitted
+  const getSubmittedDocumentsCount = () => {
+    let count = 0;
+    if (data.student_card_status !== 'not_started') count++;
+    if (data.registration_proof_status !== 'not_started') count++;
+    if (data.fee_statement_status !== 'not_started') count++;
+    return count;
+  };
+
   const progress = calculateProgress();
+  const documentsOverallStatus = getDocumentsOverallStatus();
+  const submittedCount = getSubmittedDocumentsCount();
 
   // ============================================
   // COMPACT MODE (For listing cards, etc)
@@ -234,7 +268,7 @@ export function VerificationStatus({ userId, compact = false }: VerificationStat
           </div>
         </div>
 
-        {/* DOCUMENT VERIFICATION */}
+        {/* ✅ FIXED: DOCUMENT VERIFICATION - ONE APPROVAL FOR ALL */}
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
@@ -242,11 +276,11 @@ export function VerificationStatus({ userId, compact = false }: VerificationStat
                 {data.documents_verified ? '✅' : '○'} Document Verification
               </h3>
               <p className="text-sm text-gray-600 mt-1">
-                Upload required documents for review
+                Upload 3 required documents for review
               </p>
               {data.documents_verified && data.documents_verified_at && (
                 <p className="text-xs text-green-600 mt-2">
-                  Verified on {new Date(data.documents_verified_at).toLocaleDateString()}
+                  All documents approved on {new Date(data.documents_verified_at).toLocaleDateString()}
                 </p>
               )}
             </div>
@@ -254,49 +288,63 @@ export function VerificationStatus({ userId, compact = false }: VerificationStat
               className={`px-3 py-1 rounded-full text-sm font-medium border whitespace-nowrap ${
                 data.documents_verified
                   ? 'bg-green-100 text-green-800 border-green-300'
+                  : documentsOverallStatus === 'rejected'
+                  ? 'bg-red-100 text-red-800 border-red-300'
                   : 'bg-yellow-100 text-yellow-800 border-yellow-300'
               }`}
             >
-              {data.documents_verified ? 'Approved' : 'In Progress'}
+              {data.documents_verified
+                ? 'All Approved ✓'
+                : documentsOverallStatus === 'rejected'
+                ? 'Rejected'
+                : `In Progress (${submittedCount}/3)`}
             </span>
           </div>
 
-          {/* INDIVIDUAL DOCUMENTS */}
-          <div className="space-y-2 pl-6">
-            {/* Student Card */}
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-700">Student Card</span>
-              <span
-                className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
-                  data.student_card_status
-                )}`}
-              >
-                {getStatusText(data.student_card_status)}
-              </span>
-            </div>
+          {/* ✅ FIXED: INDIVIDUAL DOCUMENTS - Show submission status only */}
+          <div className="space-y-2 pl-6 text-sm">
+            <p className="text-gray-600 mb-3">
+              {data.documents_verified
+                ? '✅ All documents have been approved!'
+                : `Submit all 3 documents below for review. Once all are approved, you'll be verified.`}
+            </p>
+            
+            <div className="space-y-2">
+              {/* Student Card */}
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">📄 Student Card</span>
+                <span
+                  className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
+                    data.student_card_status
+                  )}`}
+                >
+                  {getStatusText(data.student_card_status)}
+                </span>
+              </div>
 
-            {/* Registration Proof */}
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-700">Registration Proof</span>
-              <span
-                className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
-                  data.registration_proof_status
-                )}`}
-              >
-                {getStatusText(data.registration_proof_status)}
-              </span>
-            </div>
+              {/* Registration Proof */}
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">📋 Registration Proof</span>
+                <span
+                  className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
+                    data.registration_proof_status
+                  )}`}
+                >
+                  {getStatusText(data.registration_proof_status)}
+                </span>
+              </div>
 
-            {/* Fee Statement */}
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-700">Fee Statement</span>
-              <span
-                className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
-                  data.fee_statement_status
-                )}`}
-              >
-                {getStatusText(data.fee_statement_status)}
-              </span>
+              {/* Fee Statement */}
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">💰 Fee Statement</span>
+                <span
+                  className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
+                    data.fee_statement_status
+                  )}`}
+                >
+                  {getStatusText(data.fee_statement_status)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -332,12 +380,13 @@ export function VerificationStatus({ userId, compact = false }: VerificationStat
 
       {/* INFO BOX */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">💡 What Happens Next?</h4>
+        <h4 className="font-semibold text-blue-900 mb-2">💡 How Document Verification Works</h4>
         <ul className="space-y-1 text-sm text-blue-800">
-          <li>✓ Email verification is automatic</li>
-          <li>✓ Admin will review documents within 24-48 hours</li>
-          <li>✓ You'll receive an email when verified</li>
-          <li>✓ Once approved, you can buy, sell, and message</li>
+          <li>✓ Upload all 3 required documents from the Documents tab</li>
+          <li>✓ Admin will review each document within 24-48 hours</li>
+          <li>✓ Once ALL 3 are approved, your account is verified</li>
+          <li>✓ You'll receive an email when fully verified</li>
+          <li>✓ Verified accounts can buy, sell, and message freely</li>
         </ul>
       </div>
     </div>
