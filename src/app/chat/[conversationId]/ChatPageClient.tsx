@@ -50,10 +50,9 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
   const [conversations, setConversations] = useState<ConvSummary[]>([]);
   const [search, setSearch] = useState('');
 
-  // Transaction flow state (FIXED!)
+  // ✅ Transaction flow state - SIMPLE!
   const [showMeetupForm, setShowMeetupForm] = useState(false);
   const [createdTransactionId, setCreatedTransactionId] = useState<string | null>(null);
-  const [creatingTx, setCreatingTx] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
@@ -173,7 +172,7 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
     setupChat();
   }, [conversationId]);
 
-  // -------- setup realtime subscription (SEPARATE EFFECT!) --------
+  // -------- setup realtime subscription --------
   useEffect(() => {
     let mounted = true;
 
@@ -257,7 +256,7 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
       ]);
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessage(text); // Restore message on error
+      setMessage(text);
     }
   };
 
@@ -297,7 +296,6 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
 
       if (updErr) {
         console.error('hide update failed', updErr);
-        // Rollback
         setMessages((prev) =>
           prev.map((m) =>
             m.id === messageId
@@ -313,7 +311,6 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
       }
     } catch (error) {
       console.error('Error hiding message:', error);
-      // Rollback on any error
       setMessages((prev) =>
         prev.map((m) =>
           m.id === messageId
@@ -329,8 +326,9 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
     }
   };
 
-  // FIXED: Show meetup form first, not QR code
+  // ✅ SIMPLE: Just open the form!
   const handleTransactionClick = () => {
+    console.log('Transaction button clicked - opening meetup form');
     if (!currentUser || !conv || !activeListingId) {
       alert('Missing transaction data');
       return;
@@ -338,7 +336,7 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
     setShowMeetupForm(true);
   };
 
-  // Filter messages that are not deleted for current user
+  // Filter messages
   const visibleMessages = messages.filter(
     (m) => !(m.deleted_for ?? []).includes(currentUser?.id)
   );
@@ -396,7 +394,7 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
           </div>
         ) : (
           <>
-            {/* STICKY TRANSACTION RIBBON */}
+            {/* STICKY HEADER */}
             <div className="sticky top-0 z-10 bg-background border-b border-white/10 p-4 flex items-center justify-between">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {otherUser?.profile_picture_url ? (
@@ -420,17 +418,16 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
                 </div>
               </div>
 
-              {/* FIXED: Transaction button now opens meetup form */}
+              {/* ✅ Transaction button - opens form */}
               <button
                 onClick={handleTransactionClick}
-                disabled={creatingTx}
-                className="px-4 py-2 bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 text-sm font-semibold transition shrink-0 ml-2"
+                className="px-4 py-2 bg-green-600 rounded hover:bg-green-700 text-sm font-semibold transition shrink-0 ml-2"
               >
-                {creatingTx ? 'Creating...' : '📦 Transaction'}
+                📦 Transaction
               </button>
             </div>
 
-            {/* MESSAGES SCROLL AREA */}
+            {/* MESSAGES AREA */}
             <div
               ref={scrollRef}
               className="flex-1 overflow-y-auto p-4 space-y-4"
@@ -477,7 +474,7 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
               )}
             </div>
 
-            {/* COMPOSER */}
+            {/* MESSAGE INPUT */}
             <div className="border-t border-white/10 p-4 flex gap-2">
               <input
                 type="text"
@@ -503,7 +500,7 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
         )}
       </main>
 
-      {/* MEETUP LOCATION FORM MODAL */}
+      {/* ✅ MEETUP FORM MODAL - opens when button clicked */}
       {showMeetupForm && !createdTransactionId && otherUser && conv && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="my-8">
@@ -515,27 +512,28 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
               sellerName={otherUser.full_name}
               buyerId={conv.buyer_id}
               onSuccess={(txId) => {
+                console.log('Transaction created with ID:', txId);
                 setCreatedTransactionId(txId);
                 setShowMeetupForm(false);
               }}
-              onCancel={() => setShowMeetupForm(false)}
+              onCancel={() => {
+                console.log('Meetup form cancelled');
+                setShowMeetupForm(false);
+              }}
             />
           </div>
         </div>
       )}
 
-      {/* QR CODE MODAL - Shows AFTER meetup form is complete */}
+      {/* ✅ QR CODE MODAL - shows after form completes */}
       {createdTransactionId && currentUser && conv && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-[#0b1a3a] rounded-lg max-w-md w-full border border-white/20">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">Transaction QR</h2>
+                <h2 className="text-xl font-bold">📱 Scan QR Code</h2>
                 <button
-                  onClick={() => {
-                    setCreatedTransactionId(null);
-                    setShowMeetupForm(false);
-                  }}
+                  onClick={() => setCreatedTransactionId(null)}
                   className="text-white/60 hover:text-white text-2xl"
                 >
                   ✕
@@ -546,9 +544,8 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
                 userId={currentUser.id}
                 userType={conv.buyer_id === currentUser.id ? 'buyer' : 'seller'}
                 onConfirmed={() => {
+                  console.log('QR confirmed');
                   setCreatedTransactionId(null);
-                  // Optionally send a message
-                  sendMessage();
                 }}
               />
             </div>
