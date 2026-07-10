@@ -128,11 +128,11 @@ export default function VerificationPage() {
           </div>
         )}
 
-        {/* Documents tab - one upload card per document type */}
+        {/* FIX (#8): one upload card per document type, each tracks its own status */}
         {activeTab === 'documents' && (
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded p-4 text-sm text-blue-800">
-              Upload each document separately. You&apos;ll see its review status here.
+              Upload each document separately. You'll see its review status here.
             </div>
             <DocumentUploadForm userId={userId} documentType="student_card" />
             <DocumentUploadForm userId={userId} documentType="registration_proof" />
@@ -156,7 +156,7 @@ export default function VerificationPage() {
               <p className="text-sm text-gray-700">
                 The transaction QR code is now started from inside a chat with the other person.
                 Open the chat, tap the <strong>📷 QR</strong> button in the header, and both of you scan
-                each other&apos;s code when you meet.
+                each other's code when you meet.
               </p>
               <Link href="/messages" className="inline-block mt-3 text-blue-600 font-medium hover:underline">
                 Go to Messages →
@@ -170,7 +170,7 @@ export default function VerificationPage() {
         )}
       </div>
 
-      {/* ✅ FIXED: Removed the duplicate Contact Support section - FooterContactLink handles this now */}
+      {/* ✅ FIXED: Removed duplicate contact link - FooterContactLink is used instead */}
       <FooterContactLink />
     </main>
   );
