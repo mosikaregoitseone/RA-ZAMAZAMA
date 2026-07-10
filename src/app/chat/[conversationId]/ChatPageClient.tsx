@@ -1,14 +1,11 @@
 'use client';
 
-
-
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TransactionQRCode } from '../../../components/TransactionQRCode';
 import { MeetupLocationForm } from '../../../components/MeetupLocationForm';
-import { createTransaction } from '../../../lib/transactionUtils';
 
 interface ConvSummary {
   id: string;
@@ -53,14 +50,10 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
   const [conversations, setConversations] = useState<ConvSummary[]>([]);
   const [search, setSearch] = useState('');
 
-  // QR transaction state
-  const [showQR, setShowQR] = useState(false);
-  const [activeTxId, setActiveTxId] = useState<string | null>(null);
-  const [creatingTx, setCreatingTx] = useState(false);
-
-  // Meetup location form state
+  // Transaction flow state (FIXED!)
   const [showMeetupForm, setShowMeetupForm] = useState(false);
   const [createdTransactionId, setCreatedTransactionId] = useState<string | null>(null);
+  const [creatingTx, setCreatingTx] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
@@ -336,56 +329,13 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
     }
   };
 
-  const createTransactionHandler = async () => {
+  // FIXED: Show meetup form first, not QR code
+  const handleTransactionClick = () => {
     if (!currentUser || !conv || !activeListingId) {
       alert('Missing transaction data');
       return;
     }
-
-    setCreatingTx(true);
-
-    try {
-      console.log('Creating transaction with:', {
-        buyerId: conv.buyer_id,
-        sellerId: conv.seller_id,
-        listingId: activeListingId,
-        listingPrice: listingPrice,
-      });
-
-      const result = await createTransaction({
-        buyerId: conv.buyer_id,
-        sellerId: conv.seller_id,
-        listingId: activeListingId,
-        listingPrice: listingPrice,
-      });
-
-      console.log('Transaction result:', result);
-
-      if (result.success && result.transactionId) {
-        setActiveTxId(result.transactionId);
-        setShowQR(true);
-
-        await supabase.from('messages').insert([
-          {
-            conversation_id: conversationId,
-            sender_id: currentUser.id,
-            message: '📷 Transaction QR code started. Scan each other when you meet.',
-          },
-        ]);
-      } else {
-        alert(`Error: ${result.message}`);
-      }
-    } catch (error) {
-      console.error('Exception creating transaction:', error);
-      alert('Failed to create transaction. Please try again.');
-    } finally {
-      setCreatingTx(false);
-    }
-  };
-
-  const closeQR = () => {
-    setShowQR(false);
-    setActiveTxId(null);
+    setShowMeetupForm(true);
   };
 
   // Filter messages that are not deleted for current user
@@ -470,8 +420,9 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
                 </div>
               </div>
 
+              {/* FIXED: Transaction button now opens meetup form */}
               <button
-                onClick={createTransactionHandler}
+                onClick={handleTransactionClick}
                 disabled={creatingTx}
                 className="px-4 py-2 bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 text-sm font-semibold transition shrink-0 ml-2"
               >
@@ -573,7 +524,7 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
         </div>
       )}
 
-      {/* QR MODAL */}
+      {/* QR CODE MODAL - Shows AFTER meetup form is complete */}
       {createdTransactionId && currentUser && conv && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-[#0b1a3a] rounded-lg max-w-md w-full border border-white/20">
@@ -581,7 +532,10 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold">Transaction QR</h2>
                 <button
-                  onClick={() => setCreatedTransactionId(null)}
+                  onClick={() => {
+                    setCreatedTransactionId(null);
+                    setShowMeetupForm(false);
+                  }}
                   className="text-white/60 hover:text-white text-2xl"
                 >
                   ✕
@@ -591,7 +545,11 @@ export default function ChatPageClient({ conversationId }: { conversationId: str
                 transactionId={createdTransactionId}
                 userId={currentUser.id}
                 userType={conv.buyer_id === currentUser.id ? 'buyer' : 'seller'}
-                onConfirmed={() => setCreatedTransactionId(null)}
+                onConfirmed={() => {
+                  setCreatedTransactionId(null);
+                  // Optionally send a message
+                  sendMessage();
+                }}
               />
             </div>
           </div>
