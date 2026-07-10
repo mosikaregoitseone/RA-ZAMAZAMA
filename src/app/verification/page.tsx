@@ -1,7 +1,5 @@
 'use client';
 
-
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -130,7 +128,7 @@ export default function VerificationPage() {
           </div>
         )}
 
-        {/* FIX (#8): one upload card per document type, each tracks its own status */}
+        {/* Documents tab - one upload card per document type */}
         {activeTab === 'documents' && (
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded p-4 text-sm text-blue-800">
@@ -172,17 +170,7 @@ export default function VerificationPage() {
         )}
       </div>
 
-      {/* FIX (#7): Contact Support link now points to /contact-us */}
-      <div className="bg-white border-t border-gray-200 mt-12">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 text-center">
-          <p className="text-gray-600 text-sm">
-            Need help?{' '}
-            <Link href="/contact-us" className="text-blue-600 hover:text-blue-700 font-medium">
-              Contact Support
-            </Link>
-          </p>
-        </div>
-      </div>
+      {/* ✅ FIXED: Removed the duplicate Contact Support section - FooterContactLink handles this now */}
       <FooterContactLink />
     </main>
   );
